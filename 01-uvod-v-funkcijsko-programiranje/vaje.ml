@@ -12,6 +12,7 @@
 [*----------------------------------------------------------------------------*)
 
 let razteg k v = List.map (fun x -> k *. x) v
+  (*List.map - izvede dano funkcijo na vsakem elementu seznama*)
 
 let primer_vektorji_1 = razteg 2.0 [1.0; 2.0; 3.0]
 (* val primer_vektorji_1 : float list = [2.; 4.; 6.] *)
@@ -22,6 +23,7 @@ let primer_vektorji_1 = razteg 2.0 [1.0; 2.0; 3.0]
 [*----------------------------------------------------------------------------*)
 
 let sestej u v = List.map2 ((+.)) u v
+  (*V List.map2 hkrati obdeluješ 2 seznama. Funkcija vzame en element 1. in en element 2.*)
 
 let primer_vektorji_2 = sestej [1.0; 2.0; 3.0] [4.0; 5.0; 6.0]
 (* val primer_vektorji_2 : float list = [5.; 7.; 9.] *)
@@ -30,10 +32,12 @@ let primer_vektorji_2 = sestej [1.0; 2.0; 3.0] [4.0; 5.0; 6.0]
  Napišite funkcijo `skalarni_produkt : float list -> float list -> float`, ki
  izračuna skalarni produkt dveh vektorjev. Pri tem si lahko pomagate s funkcijo
  `vsota_seznama : float list -> float`, definirano prek funkcije
- `List.fold_left`, ki jo bomo spoznali kasneje:
+ `List.fold_left`, ki jo bomo spoznali kasneje: (gre čez seznam od leve proti desni in postopoma računa eno končno vrednost)
 [*----------------------------------------------------------------------------*)
 
 let vsota_seznama s = List.fold_left (+.) 0. s
+  (*V našem primeru je 0 začetna vrednost in nato jo najprej sešteje s 1. elementom seznama, 
+  to vsoto nato sešteje z naslednjim in tako naprej.*)
 
 let skalarni_produkt u v =
   let zmnozi u v = List.map2 ( *.) u v in
@@ -109,6 +113,9 @@ let zamakni k niz =
   |> String.split_on_char '\n'
   |> List.map (fun vrstica -> (String.make k ' ') ^ vrstica)
   |> String.concat "\n"
+  (*String.split_on_char razdeli niz na seznam nizov glede na želen znak,
+  String.make k znak - naredi niz, sestavljen iz k ponovitev znaka znak,
+  String.concat znak - seznam združi v en  niz, pri čemer med elemente vstavi znak*)
 
 let primer_html_2 = zamakni 4 "Hello,\nworld!"
 (* val primer_html_2 : string = "    Hello,\n    world!" *)
@@ -118,7 +125,11 @@ let primer_html_2 = zamakni 4 "Hello,\nworld!"
  niz, ki predstavlja ustrezno zamaknjen neurejeni seznam v HTML-ju:
 [*----------------------------------------------------------------------------*)
 
-let ul _ = ()
+let ul s = 
+  s
+  |> List.map (fun niz -> "  " ^ ovij "li" niz)
+  |> String.concat "\n"
+  |> fun vsebina -> ovij "ul" ("\n" ^ vsebina ^ "\n")
 
 let primer_html_3 = ul ["ananas"; "banana"; "čokolada"]
 (* val primer_html_3 : string =
@@ -138,6 +149,8 @@ let razdeli_vrstico niz =
   let levi = String.sub niz 0 vejica in
   let desni = String.sub niz (vejica + 2) (String.length niz - (vejica + 2)) in
   levi, desni
+  (*String.index - poišče prvo pojavitev znaka v nizu in vrne njegov indeks,
+  String.sub - iz niza naredi podniz z zacetkov v podanem indeksu in s podano dolžino*)
 
 let primer_seznam_1 = razdeli_vrstico "mleko, 2"
 (* val primer_seznam_1 : string * string = ("mleko", "2") *)
@@ -176,10 +189,20 @@ let primer_seznam_3 =
  znesek nakupa.
 [*----------------------------------------------------------------------------*)
 
-let izracunaj_skupni_znesek _ _ = ()
-
-let primer_seznam_4 = 
-  let nakupovalni_seznam = "mleko, 2\njabolka, 5"
-  and cenik = "jabolka, 0.5\nkruh, 2\nmleko, 1.5" in
-  izracunaj_skupni_znesek cenik nakupovalni_seznam
+let izracunaj_skupni_znesek c s =
+  let kolicine = pretvori_v_seznam_parov s in
+  let cene = pretvori_v_seznam_parov c in
+  let kolicine2 = pretvori_druge_komponente float_of_string kolicine in
+  let cene2 = pretvori_druge_komponente float_of_string cene in
+  List.fold_left 
+  (fun skupni_znesek (izdelek, stevilo) ->
+      let cena = List.assoc izdelek cene2 in
+      skupni_znesek +. stevilo *. cena)
+    0.
+    kolicine2
+    (*List.assoc - poišče par v katerem je prva komponenta želena v izbranem seznamu*)
+let primer_seznam_4 =
+  izracunaj_skupni_znesek
+    "jabolka, 0.5\nkruh, 2\nmleko, 1.5"
+    "mleko, 2\njabolka, 5"
 (* val primer_seznam_4 : float = 5.5 *)
