@@ -25,9 +25,14 @@ let e3 = (0.0, 0.0, 1.0)
       produkt dveh vektorjev
   [*----------------------------------------------------------------------------*)
 
-let sestej_v_3d _ _ = failwith "TODO"
-let pomnozi_skalar_3d _ _ = failwith "TODO"
-let skalarni_produkt_3d _ _ = failwith "TODO"
+let sestej_v_3d ((x1, y1, z1) : vec3d) ((x2, y2, z2) : vec3d) : vec3d =
+  (x1 +. x2, y1 +. y2, z1 +. z2)
+
+let pomnozi_skalar_3d k ((x, y, z) : vec3d) : vec3d = 
+  (k *. x, k *. y, k *. z)
+
+let skalarni_produkt_3d ((x1, y1, z1) : vec3d) ((x2, y2, z2) : vec3d) =
+  x1 *. x2 +. y1 *. y2 +. z1 *. z2
 
 (*----------------------------------------------------------------------------*
     Dimenzijo lahko posplošimo z uporabo seznamov. Vektor v R^n lahko
@@ -48,9 +53,22 @@ type vec = float list
     `Neujemajoca_dimenzija`.
   [*----------------------------------------------------------------------------*)
 
-let rec sestej_v _ _ = failwith "TODO"
-let rec pomnozi_skalar _ _ = failwith "TODO"
-let rec skalarni_produkt _ _ = failwith "TODO"
+let rec sestej_v (v1 : vec) (v2 : vec) : vec =
+  match (v1, v2) with
+  | ([], []) -> []
+  | (x :: xs, y :: ys) -> (x +. y) :: sestej_v xs ys
+  | _ -> raise Neujemajoca_dimenzija
+
+let rec pomnozi_skalar k (v : vec) : vec =
+  match v with
+  | [] -> []
+  | x :: xs -> (k *. x) :: pomnozi_skalar k xs
+
+let rec skalarni_produkt (v1 : vec) (v2 : vec) =
+  match (v1, v2) with
+  | ([], []) -> 0.
+  | (x :: xs, y :: ys) -> x *. y +. skalarni_produkt xs ys
+  | _ -> raise Neujemajoca_dimenzija
 
 (*----------------------------------------------------------------------------*
    ## Seznami
@@ -67,7 +85,10 @@ let rec skalarni_produkt _ _ = failwith "TODO"
     `f (... (f (f a0 x1) x2) ...) xn`.
   [*----------------------------------------------------------------------------*)
 
-let rec zlozi_levo _ _ _ = failwith "TODO"
+let rec zlozi_levo f acc sez = 
+  match sez with
+  | [] -> acc
+  | x :: xs -> zlozi_levo f (f acc x) xs
 
 (*----------------------------------------------------------------------------*
     Napišite funkcijo `zlozi_desno : ('a -> 'b -> 'b) -> 'b -> 'a list -> 'b`,
@@ -79,7 +100,10 @@ let rec zlozi_levo _ _ _ = failwith "TODO"
     `f x1 (f x2 (... (f xn b0) ...))`.
   [*----------------------------------------------------------------------------*)
 
-let rec zlozi_desno _ _ _ = failwith "TODO"
+let rec zlozi_desno f acc sez = 
+  match sez with
+  | [] -> acc
+  | x :: xs -> f x (zlozi_desno f acc xs)
 
 (*----------------------------------------------------------------------------*
     Napišite funkcijo
@@ -95,7 +119,13 @@ let rec zlozi_desno _ _ _ = failwith "TODO"
     `f a1 x2 = (a2, y2)`...
   [*----------------------------------------------------------------------------*)
 
-let rec zlozi_levo_pretvori _ _ _ = failwith "TODO"
+let rec zlozi_levo_pretvori f acc sez =
+  match sez with
+  | [] -> (acc, [])
+  | x :: xs ->
+      let (nov_acc, y) = f acc x in
+      let (koncni_acc, ys) = zlozi_levo_pretvori f nov_acc xs in
+      (koncni_acc, y :: ys)
 
 (*----------------------------------------------------------------------------*
     Napišite funkcijo
@@ -109,7 +139,11 @@ let rec zlozi_levo_pretvori _ _ _ = failwith "TODO"
     `Neujemajoca_dimenzija`.
   [*----------------------------------------------------------------------------*)
 
-let rec zlozi_levo2 _ _ _ _ = failwith "TODO"
+let rec zlozi_levo2 f acc sez1 sez2 =
+  match (sez1, sez2) with
+  | ([], []) -> acc
+  | (x :: xs, y :: ys) -> zlozi_levo2 f (f acc x y) xs ys
+  | _ -> raise Neujemajoca_dimenzija
 
 (*----------------------------------------------------------------------------*
    ## Uporaba zlaganja
@@ -126,7 +160,7 @@ let rec zlozi_levo2 _ _ _ _ = failwith "TODO"
     - : float = 5.
   [*----------------------------------------------------------------------------*)
 
-let norma _ = failwith "TODO"
+let norma v = sqrt (zlozi_levo (fun acc x -> acc +. x *. x) 0. v)
 
 (*----------------------------------------------------------------------------*
     Napišite funkcijo
@@ -139,7 +173,7 @@ let norma _ = failwith "TODO"
     - : float = 32.
   [*----------------------------------------------------------------------------*)
 
-let skalarni_produkt_zlozi _ _ = failwith "TODO"
+let skalarni_produkt_zlozi v1 v2 = zlozi_levo2 (fun acc x y -> acc +. x *. y) 0. v1 v2
 
 (*----------------------------------------------------------------------------*
    ## Prodajni avtomat
