@@ -79,6 +79,7 @@ let range_tlrec n =
   (*ta je repno rekurzivna,
   aux - pomožna funkcija,
   acc - akumulator, v katerega se nalaga sprotno računanje*)
+  (*Function matcha zadnji argument, torej zadnjega na napišemo, ampak obstaja.*)
 
 let primer_range = range 10
 (* val primer_range : int list = [0; 1; 2; 3; 4; 5; 6; 7; 8; 9; 10] *)

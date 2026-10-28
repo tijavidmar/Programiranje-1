@@ -20,9 +20,14 @@ module type NAT = sig
 
   val eq  : t -> t -> bool
   val zero : t
-  (* Dodajte manjkajoče! *)
-  (* val to_int : t -> int *)
-  (* val of_int : int -> t *)
+  val one : t
+  val ( ++ ) : t -> t -> t
+  (*Vseeno kako poimenuješ, je pa res, da če daš samo + s tem
+  povoziš že obstoječi + za int*)
+  val ( -- ) : t -> t -> t
+  val ( ** ) : t -> t -> t
+  val to_int : t -> int
+  val of_int : int -> t
 end
 
 (*----------------------------------------------------------------------------*
@@ -36,9 +41,17 @@ end
 module Nat_int : NAT = struct
 
   type t = int
-  let eq x y = failwith "later"
+  let eq x y = x = y
   let zero = 0
-  (* Dodajte manjkajoče! *)
+  let one = 1
+  let ( ++ ) x y = x + y
+  (* Možno je pisati na krajše, ker sta obe funkciji 2 argumentov: let ( ++ ) = ( + )*)
+  let ( -- ) x y = if x <= y then zero else x - y
+  (*Lahko pa tudi implementiramo tako, da vedno odštevamo 
+  večjega od manjšega ne glede na vrstni red.*)
+  let ( ** ) x y = x * y
+  let to_int x = x 
+  let of_int x = x
 
 end
 
@@ -53,12 +66,40 @@ end
 
 module Nat_peano : NAT = struct
 
-  type t = unit (* To morate spremeniti! *)
-  let eq x y = failwith "later"
-  let zero = () (* To morate spremeniti! *)
-  (* Dodajte manjkajoče! *)
+  type t = 
+  | Zero
+  | Succ of t
+  let rec eq x y = 
+    match (x, y) with
+    | (Zero, Zero) -> true
+    | (Succ x', Succ y') -> eq x' y'
+    | _ -> false
+  let zero = Zero
+  let one = Succ Zero
+let rec ( ++ ) x y = 
+  match x with
+  | Zero -> y
+  | Succ n -> Succ ( n ++ y )
+  (*Lahko tudi n + Succ ( y )*)
+let rec ( -- ) x y =
+  match (x, y) with
+  | (x, Zero) -> x
+  | (Succ x', Succ y') -> x' -- y'
+  | (Zero, _) -> Zero
+let rec ( ** ) x y = 
+  match x with
+  | Zero -> Zero
+  | Succ x' -> y ++ (x' ** y)
+  let rec to_int =
+    function
+    | Zero -> 0
+    | Succ n -> 1 + to_int n
+  let rec of_int n = 
+    if n <= 0 then Zero else Succ (of_int (n - 1))
 
 end
+(*Če ne želiš, da ti med pisanjem ves čas podčrtuje, začasno izbrišeš : NAT
+in ga dodaš samo na koncu in preveriš, če je vse prav.*)
 
 (*----------------------------------------------------------------------------*
  Ocaml omogoča sestavljanje modulov iz drugih modulov z uporabo [funktorjev]
@@ -82,12 +123,22 @@ module type CALC = sig
 end
 
 module Nat_calculations (N: NAT) : CALC with type t := N.t = struct
-  let factorial _ = (* To morate spremeniti! *)
-    N.zero
+  (*Skrajšan zapis?*)
+  let rec factorial n = 
+    if N.eq n N.zero then N.one 
+    else N.( ** ) n (factorial (N.( -- ) n N.one))
+    (*Če je n = 0 je 1, sicer je n * fakulteta(n-1)*)
+  let sum_100 = 
+    let rec aux acc n =
+      if N.eq n N.zero then acc
+      else aux (N.( ++ ) n acc) (N.( -- ) n N.one) 
+    in 
+    aux N.zero (N.of_int 100)
 
-  let sum_100 = (* To morate spremeniti! *)
-    N.zero
 end
+(*Lahko daš samo open N in ne rabiš pisat N._,
+moraš pa paziti, da si ne  povoziš že obstoječih funkcij 
+ali pa: let open __ in*)
 
 (*----------------------------------------------------------------------------*
  Z moduli funktorja `Nat_calculations` lahko sedaj preverimo pravilnost
@@ -100,6 +151,16 @@ end
 module Nat_int_calc = Nat_calculations (Nat_int)
 module Nat_peano_calc = Nat_calculations (Nat_peano)
 
+let sum_100_int = 
+  Nat_int_calc.sum_100 |> Nat_int.to_int
+let fact_5_int = 
+  Nat_int_calc.factorial (Nat_int.of_int 5) |> Nat_int.to_int
+
+let sum_100_peano = 
+  Nat_peano_calc.sum_100 |> Nat_peano.to_int
+let fact_5_peano =
+  Nat_peano_calc.factorial (Nat_peano.of_int 5) |> Nat_peano.to_int
+  (*Lahko tudi Nat_peano.of_int 5 |> Nat_peano_calc.factorial |> Nat_peano.to_int*)
 
 (* val sum_100_int : int = 5050 *)
 (* val sum_100_peano : int = 5050 *)
