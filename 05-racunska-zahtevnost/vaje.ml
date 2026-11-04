@@ -33,7 +33,9 @@
  časovna zahtevnost funkcije?
 [*----------------------------------------------------------------------------*)
 
-let min_and_rest _ = ()
+let min_and_rest _ = ()   
+
+(*Časovna zahtevnost: O(n^2)*)
 
 let primer_min_and_rest = min_and_rest [3; 1; 2; 1]
 (* val primer_min_and_rest : (int * int list) option = Some (1, [3; 2; 1]) *)
@@ -45,7 +47,9 @@ let primer_min_and_rest = min_and_rest [3; 1; 2; 1]
  Namig: Uporabite funkcijo `min_and_rest` iz prejšnje naloge.
 [*----------------------------------------------------------------------------*)
 
-let selection_sort _ = ()
+let selection_sort _ = ()  
+
+(*Časovna zahtevnost: O(n^2)*)
 
 let primer_selection_sort = selection_sort [3; 2; 5; 9; 1; 7; 4; 3]
 (* val primer_selection_sort : int list = [1; 2; 3; 3; 4; 5; 7; 9] *)
@@ -56,6 +60,8 @@ let primer_selection_sort = selection_sort [3; 2; 5; 9; 1; 7; 4; 3]
  podseznama dodali z `@`? Ali bi se s tem spremenila časovna zahtevnost
  urejanja?
 [*----------------------------------------------------------------------------*)
+
+(*@ je dražja, ampak ne, ker sta potem obe O(n) in je zato skupna zahtevnost O(n)???*)
 
 (*----------------------------------------------------------------------------*
  ## Urejanje z izbiranjem na tabelah
@@ -76,8 +82,17 @@ let primer_selection_sort = selection_sort [3; 2; 5; 9; 1; 7; 4; 3]
  na mestu in vrne naj `unit`.
 [*----------------------------------------------------------------------------*)
 
-let swap _ _ _ = ()
+(*Delo z arrayi:
+a.(i) - dostop do indeksa - tip: npr int, če je seznam int
+a.(i) <- n - n na i-to mesto - tip: unit, ker samo spremeni
+Med operacijami, ki vračajo unit, moramo dati ;*)
 
+let swap a i j =
+  let v = a.(i) in
+  a.(i) <- a.(j);
+  a.(j) <- v
+
+  (*Časovna zahtevnost: O(1)*)
 let primer_swap =
   let test = [|0; 1; 2; 3; 4|] in
   swap test 1 4;
@@ -89,7 +104,19 @@ let primer_swap =
  `a` med indeksoma `lower` in `upper` (oba indeksa sta vključena).
 [*----------------------------------------------------------------------------*)
 
-let index_min _ _ _ = ()
+let index_min a lower upper =
+  let rec aux i i_min =
+    if i > upper then i_min 
+    else 
+      let new_i_min = (
+        if a.(i) < a.(i_min) then i else i_min
+      ) in
+      aux (i + 1) new_i_min
+  in
+  aux lower lower
+  (*i - indeks kje se nahajamo, i_min - indeks najmanjšega do zdaj*)
+(*Časovna zahtevnost: O(n),
+- aux: 4 operacije se združijo v 0(1): T(n) = O(1) + T(n-1) = ... = O(1+...+1) = O(n), n je velikost vhoda (upper - i)*)
 
 let primer_index_min = index_min [|0; 2; 9; 3; 6|] 2 4
 (* val primer_index_min : int = 3 *)
@@ -99,7 +126,19 @@ let primer_index_min = index_min [|0; 2; 9; 3; 6|] 2 4
  Kakšna je njena časovna zahtevnost?
 [*----------------------------------------------------------------------------*)
 
-let selection_sort_array _ = ()
+let selection_sort_array a =
+  let n = Array.length a in  (*O(1)*)
+  let rec aux unsorted =     (*O(n^2)*)
+    if unsorted > (n - 1) then ()
+    else
+      let i_min = index_min a unsorted (n - 1) in   (*O(k) - k je dolžina neurejenega podseznama*)
+      swap a unsorted i_min;
+      aux (unsorted + 1)
+    in
+    aux 0   (*O(k) kličemo n krat = O(n)*)
+    (*Unsorted- indeks še ne urejenega elementa v tabeli*)
+(*Časovna zahtevnost: O(n^2),
+T(n) = O(n) + T(n-1) = n + (n-1) + (n-2) + ... = n(n+1)/2*)
 
 let primer_selection_sort_array =
   let test = [|3; 2; 5; 9; 1; 7; 4; 3|] in
