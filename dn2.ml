@@ -56,8 +56,17 @@ let iz_znakov znaki = String.concat "" (List.map (String.make 1) znaki)
  - : bit list = [O; I; I; O]
 [*----------------------------------------------------------------------------*)
 
-let v_niz_bitov _ = failwith "TODO"
-let iz_niza_bitov _ = failwith "TODO"
+let rec v_niz_bitov biti =
+  match biti with
+  | [] -> ""
+  | x :: xs ->
+      (if x = O then "0" else "1") ^ v_niz_bitov xs
+
+let rec iz_niza_bitov niz =
+  match znaki niz with
+  | '0' :: xs -> O :: iz_niza_bitov (iz_znakov xs)
+  | '1' :: xs -> I :: iz_niza_bitov (iz_znakov xs)
+  | _ -> []
 
 (*----------------------------------------------------------------------------*
  Sestavite funkcijo `tabela_kod : drevo -> (char * bit list) list`, ki vrne
@@ -69,7 +78,13 @@ let iz_niza_bitov _ = failwith "TODO"
   ('k', [I; I; I; I])]
 [*----------------------------------------------------------------------------*)
 
-let rec tabela_kod _ = failwith "TODO"
+let tabela_kod drevo =
+  let rec aux drevo koda =
+    match drevo with
+    | List c -> [(c, koda)]
+    | Vozlisce (levo, desno) -> aux levo (koda @ [O]) @ aux desno (koda @ [I])
+  in
+  aux drevo []
 
 (*----------------------------------------------------------------------------*
  Sestavite funkcijo `kodiraj : drevo -> string -> bit list`, ki besedilo
@@ -79,7 +94,15 @@ let rec tabela_kod _ = failwith "TODO"
  - : string = "0110100"
 [*----------------------------------------------------------------------------*)
 
-let kodiraj _ _ = failwith "TODO"
+let kodiraj drevo niz =
+  let tabela = tabela_kod drevo in
+  let rec aux znaki =
+    match znaki with
+    | [] -> []
+    | x :: xs ->
+        List.assoc x tabela @ aux xs
+  in
+  aux (znaki niz)
 
 (*----------------------------------------------------------------------------*
  Sestavite funkcijo `dekodiraj : drevo -> bit list -> string`, ki zaporedje
@@ -90,7 +113,21 @@ let kodiraj _ _ = failwith "TODO"
  - : string = "bada"
 [*----------------------------------------------------------------------------*)
 
-let dekodiraj _ _ = failwith "TODO"
+let dekodiraj drevo biti =
+  let rec aux biti =
+    match biti with
+    | [] -> []
+    | _ ->
+        let rec beri drevo biti =
+          match drevo, biti with
+          | List znak, _ -> znak :: aux biti
+          | Vozlisce (levo, desno), O :: xs -> beri levo xs
+          | Vozlisce (levo, desno), I :: xs -> beri desno xs
+          | Vozlisce _, [] -> []
+        in
+        beri drevo biti
+  in
+  iz_znakov (aux biti)
 
 (*----------------------------------------------------------------------------*
  ## Postopek gradnje drevesa
