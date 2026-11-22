@@ -81,7 +81,7 @@ let rec iz_niza_bitov niz =
 let tabela_kod drevo =
   let rec aux drevo koda =
     match drevo with
-    | List c -> [(c, koda)]
+    | List znak -> [(znak, koda)]
     | Vozlisce (levo, desno) -> aux levo (koda @ [O]) @ aux desno (koda @ [I])
   in
   aux drevo []
@@ -141,7 +141,20 @@ let dekodiraj drevo biti =
  - : (char * int) list = [('a', 5); ('b', 2); ('d', 1); ('k', 1); ('r', 2)]
 [*----------------------------------------------------------------------------*)
 
-let frekvence _ = failwith "TODO"
+let frekvence niz =
+  let rec aux niz ze_videni =
+    match znaki niz with
+    | [] -> ze_videni
+    | x :: xs ->
+        if List.mem x (List.map fst ze_videni) then
+          aux (iz_znakov xs)
+            (List.map (fun (c, n) ->
+              if c = x then (c, n + 1) else (c, n)
+              ) ze_videni)
+        else
+          aux (iz_znakov xs) ((x, 1) :: ze_videni)
+  in
+  List.sort compare (aux niz []) 
 
 (*----------------------------------------------------------------------------*
  Najboljše drevo za besedilo zgradimo iz frekvenc njegovih znakov. Utež
@@ -203,9 +216,27 @@ module UrejenSeznam : PRIORITETNA_VRSTA = struct
   type 'a t = 'a list
 
   let prazna = []
-  let rec vstavi _ _ = failwith "TODO"
-  let odstrani_najmanjsega _ = failwith "TODO"
-  let rec zlij _ _ = failwith "TODO"
+  let rec vstavi el vrsta = 
+    match vrsta with
+  | [] -> [el]
+  | x :: xs ->
+      if el <= x then el :: vrsta
+      else x :: vstavi el xs
+
+  let odstrani_najmanjsega vrsta = 
+    match vrsta with
+    | [] -> None
+    | x :: xs -> Some (x, xs)
+
+  let rec zlij vrsta1 vrsta2 = 
+    match vrsta1, vrsta2 with
+    | [], [] -> []
+    | [], x :: xs -> vrsta2
+    | x :: xs, [] -> vrsta1
+    | x :: xs, y :: ys -> 
+      if x <= y then [x] @ (zlij xs vrsta2)
+      else [y] @ (zlij vrsta1 ys)
+
 end
 
 (*----------------------------------------------------------------------------*
@@ -247,7 +278,10 @@ let primer_kopice =
  kopice.
 [*----------------------------------------------------------------------------*)
 
-let rang _ = failwith "TODO"
+let rang kopica = 
+  match kopica with
+  | Prazna -> 0
+  | Sestavljena (x, _, _, _) -> x
 
 (*----------------------------------------------------------------------------*
  Sestavite funkcijo `je_levicarska_kopica : 'a kopica -> bool`, ki preveri, ali
@@ -260,7 +294,23 @@ let rang _ = failwith "TODO"
  - : bool = false
 [*----------------------------------------------------------------------------*)
 
-let rec je_levicarska_kopica _ = failwith "TODO"
+let rec je_levicarska_kopica kopica =
+  match kopica with
+  | Prazna -> true
+  | Sestavljena (r, levo, x, desno) ->
+      let urejena =
+        match levo, desno with
+        | Prazna, Prazna -> true
+        | Sestavljena (_, _, y, _), Prazna -> x <= y
+        | Prazna, Sestavljena (_, _, z, _) -> x <= z
+        | Sestavljena (_, _, y, _), Sestavljena (_, _, z, _) ->
+            x <= y && x <= z
+      in
+      urejena
+      && rang levo >= rang desno
+      && r = rang desno + 1
+      && je_levicarska_kopica levo
+      && je_levicarska_kopica desno
 
 (*----------------------------------------------------------------------------*
  Sestavite funkcijo `sestavi : 'a -> 'a kopica -> 'a kopica -> 'a kopica`, ki
@@ -274,7 +324,11 @@ let rec je_levicarska_kopica _ = failwith "TODO"
  - : bool = true
 [*----------------------------------------------------------------------------*)
 
-let sestavi _ _ _ = failwith "TODO"
+let sestavi koren kopica1 kopica2 =
+  if rang kopica1 >= rang kopica2 then
+    Sestavljena (rang kopica2 + 1, kopica1, koren, kopica2)
+  else
+    Sestavljena (rang kopica1 + 1, kopica2, koren, kopica1)
 
 (*----------------------------------------------------------------------------*
  Sestavite funkcijo `zlij : 'a kopica -> 'a kopica -> 'a kopica`, ki zlije dve
@@ -298,7 +352,15 @@ let sestavi _ _ _ = failwith "TODO"
               7 (1)
 [*----------------------------------------------------------------------------*)
 
-let rec zlij _ _ = failwith "TODO"
+let rec zlij kopica1 kopica2 =
+  match kopica1, kopica2 with
+  | Prazna, kopica | kopica, Prazna -> kopica
+  | Sestavljena (_, levo1, x, desno1),
+    Sestavljena (_, levo2, y, desno2) ->
+      if x <= y then
+        sestavi x levo1 (zlij desno1 kopica2)
+      else
+        sestavi y levo2 (zlij kopica1 desno2)
 
 (*----------------------------------------------------------------------------*
  Sestavite modul `LevicarskaKopica`, ki prioritetno vrsto predstavi z
@@ -309,7 +371,8 @@ module LevicarskaKopica : PRIORITETNA_VRSTA = struct
   type 'a t = 'a kopica
 
   let prazna = Prazna
-  let vstavi _ _ = failwith "TODO"
+  let vstavi el kopica = 
+
   let odstrani_najmanjsega _ = failwith "TODO"
   let zlij _ _ = failwith "TODO"
 end
