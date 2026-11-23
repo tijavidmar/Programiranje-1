@@ -372,9 +372,17 @@ module LevicarskaKopica : PRIORITETNA_VRSTA = struct
 
   let prazna = Prazna
   let vstavi el kopica = 
+    zlij (Sestavljena (1, Prazna, el, Prazna)) kopica
 
-  let odstrani_najmanjsega _ = failwith "TODO"
-  let zlij _ _ = failwith "TODO"
+  let odstrani_najmanjsega kopica = 
+    match kopica with
+  | Prazna -> None
+  | Sestavljena (_, levo, x, desno) ->
+      Some (x, zlij levo desno)
+
+  let zlij kopica1 kopica2 = 
+    zlij kopica1 kopica2
+
 end
 
 (*----------------------------------------------------------------------------*
@@ -389,7 +397,17 @@ end
 [*----------------------------------------------------------------------------*)
 
 module Uredi (V : PRIORITETNA_VRSTA) = struct
-  let uredi _ = failwith "TODO"
+  let uredi seznam = 
+    let vrsta =
+      List.fold_left (fun vrsta el -> V.vstavi el vrsta) V.prazna seznam
+    in
+    let rec aux vrsta =
+      match V.odstrani_najmanjsega vrsta with
+      | None -> []
+      | Some (x, nova_vrsta) -> x :: aux nova_vrsta
+    in
+    aux vrsta
+
 end
 
 module UrediSSeznamom = Uredi (UrejenSeznam)
@@ -413,7 +431,31 @@ module UrediSKopico = Uredi (LevicarskaKopica)
 [*----------------------------------------------------------------------------*)
 
 module Huffman (V : PRIORITETNA_VRSTA) = struct
-  let zgradi_drevo _ = failwith "TODO"
+  let zgradi_drevo seznam = 
+    let vrsta =
+      List.fold_left
+        (fun vrsta (znak, utez) ->
+          V.vstavi (utez, znak, List znak) vrsta)
+        V.prazna seznam
+    in
+    let rec aux vrsta =
+      match V.odstrani_najmanjsega vrsta with
+      | None -> failwith "Napaka"
+      | Some ((utez1, znak1, drevo1), vrsta1) ->
+          match V.odstrani_najmanjsega vrsta1 with
+          | None -> failwith "Napaka"
+          | Some ((utez2, znak2, drevo2), vrsta2) ->
+              match V.odstrani_najmanjsega vrsta2 with
+              | None -> Vozlisce (drevo1, drevo2)
+              | Some _ ->
+                  let novo =
+                    (utez1 + utez2, min znak1 znak2,
+                     Vozlisce (drevo1, drevo2))
+                  in
+                  aux (V.vstavi novo vrsta2)
+    in
+    aux vrsta
+
 end
 
 module HuffmanSSeznamom = Huffman (UrejenSeznam)
@@ -434,7 +476,12 @@ let zgradi_drevo = HuffmanSKopico.zgradi_drevo
  - : int = 23
 [*----------------------------------------------------------------------------*)
 
-let dolzina_kodiranja _ _ = failwith "TODO"
+let dolzina_kodiranja seznam drevo = 
+  let tabela = tabela_kod drevo in
+  List.fold_left
+    (fun vsota (znak, frekvenca) ->
+      vsota + frekvenca * List.length (List.assoc znak tabela))
+    0 seznam
 
 (*----------------------------------------------------------------------------*
  Sestavite funkciji `stisni : string -> drevo * bit list`, ki zgradi drevo za
@@ -447,8 +494,13 @@ let dolzina_kodiranja _ _ = failwith "TODO"
  - : string = "abrakadabra"
 [*----------------------------------------------------------------------------*)
 
-let stisni _ = failwith "TODO"
-let razsiri _ = failwith "TODO"
+let stisni niz = 
+  let seznam = frekvence niz in
+  let drevo = HuffmanSKopico.zgradi_drevo seznam in
+  (drevo, kodiraj drevo niz)
+
+let razsiri (drevo, biti) = 
+  dekodiraj drevo biti
 
 (*----------------------------------------------------------------------------*
  Sestavite funkcijo `razmerje_stiskanja : string -> float`, ki vrne razmerje
@@ -459,7 +511,10 @@ let razsiri _ = failwith "TODO"
  - : float = 0.21875
 [*----------------------------------------------------------------------------*)
 
-let razmerje_stiskanja _ = failwith "TODO"
+let razmerje_stiskanja niz = 
+  let (_, biti) = stisni niz in
+  float_of_int (List.length biti) /.
+  float_of_int (8 * String.length niz)
 
 (* Pripomočki za testiranje - ignorirajte *)
 
