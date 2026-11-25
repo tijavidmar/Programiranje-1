@@ -126,8 +126,7 @@ def pivot(a, start, end):
                     a[i], a[j] = a[j], a[i]
                     k += 1
                     break
-
-                   
+                
 ###############################################################################
 # V tabeli želimo poiskati vrednost k-tega elementa po velikosti.
 #

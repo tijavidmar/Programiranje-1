@@ -35,6 +35,8 @@ from functools import cache
 # medtem ko iz vrste 5 in stolpca 0 ne more pobegniti.
 # =============================================================================
 
+def pot_pobega(soba, vrsta, stolpec, koraki):
+    
 
 # =============================================================================
 # Najdaljše naraščajoče podzaporedje
@@ -48,12 +50,57 @@ from functools import cache
 # podzaporedje `[2, 3, 4, 4, 6, 7, 8, 9]`.
 # -----------------------------------------------------------------------------
 
+def najdaljse_narascajoce_podazporedje(sez):
+    n = len(sez)
+    nov = [[x] for x in sez]
+
+    if n == 0:
+        return []
+
+    for i in range(n):
+        for j in range(i):
+            if sez[j] <= sez[i]:
+                if len(nov[j]) + 1 > len(nov[i]):
+                    nov[i] = nov[j] + [sez[i]]
+
+    return max(nov, key=len)
+
 # -----------------------------------------------------------------------------
 # Rešitev sedaj popravite tako, da funkcija `vsa_najdaljsa` vrne seznam vseh
 # najdaljših naraščajočih podzaporedij.
 # -----------------------------------------------------------------------------
 
+def vsa_najdaljsa(sez):
+    n = len(sez)
 
+    if n == 0:
+        return []
+
+    nov = [[[x]] for x in sez]
+
+    for i in range(n):
+        for j in range(i):
+            if sez[j] <= sez[i]:
+                dolzina = len(nov[j][0]) + 1
+
+                if dolzina > len(nov[i][0]):
+                    nov[i] = [pod + [sez[i]] for pod in nov[j]]
+
+                elif dolzina == len(nov[i][0]):
+                    nov[i].extend(
+                        [pod + [sez[i]] for pod in nov[j]]
+                    )
+
+    naj_dolzina = max(len(pod) for skupina in nov for pod in skupina)
+
+    rezultat = []
+
+    for skupina in nov:
+        for pod in skupina:
+            if len(pod) == naj_dolzina:
+                rezultat.append(pod)
+
+    return rezultat
 
 # =============================================================================
 # Žabica
